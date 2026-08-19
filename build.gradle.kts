@@ -3,5 +3,5 @@ plugins {
 
   // Add the dependency for the Google services Gradle plugin
   id("com.google.gms.google-services") version "4.5.0" apply false
-
+  id("org.jetbrains.kotlin.android") version "261.23567.78-AS" apply false
 }
