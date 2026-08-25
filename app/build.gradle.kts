@@ -1,10 +1,7 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
-plugins {
-    id("com.android.application")
-    id("com.google.gms.google-services")
-    id("org.jetbrains.kotlin.android")
-}
+apply(plugin = "com.android.application")
+apply(plugin = "com.google.gms.google-services")
 
 android {
     namespace = "com.collegebustrack.app"
@@ -39,7 +36,7 @@ kotlin {
 }
 
 dependencies {
-    implementation(platform("com.google.firebase:firebase-bom:34.17.0"))
+    implementation("com.google.firebase:firebase-bom:34.17.0")
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-messaging")
