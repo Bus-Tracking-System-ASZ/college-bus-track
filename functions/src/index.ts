@@ -1,21 +1,30 @@
 /**
- * Import function triggers from their respective submodules:
+ * College Bus Track - Cloud Functions entry point.
  *
- * import {onCall} from "firebase-functions/v2/https";
- * import {onDocumentWritten} from "firebase-functions/v2/firestore";
- *
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
+ * Modules:
+ *  - health.ts        -> healthCheck (HTTP probe)
+ *  - users.ts         -> role -> custom claim sync triggers
+ *  - busLocation.ts   -> updateBusLocation callable (driver GPS ingestion)
+ *  - notifications.ts -> onNotificationCreated FCM fan-out
+ *  - maintenance.ts   -> detectStaleBuses schedule, seedDatabase (emulator)
  */
 
-import { setGlobalOptions } from "firebase-functions";
-import { onRequest } from "firebase-functions/https";
+import {setGlobalOptions} from "firebase-functions";
 
-setGlobalOptions({ maxInstances: 10 });
+import {healthCheck} from "./health";
+import {onNotificationCreated} from "./notifications";
+import {onUserCreated, onUserUpdated} from "./users";
+import {updateBusLocation} from "./busLocation";
+import {detectStaleBuses, seedDatabase} from "./maintenance";
 
-export const healthCheck = onRequest((request, response) => {
-  response.json({
-    status: "ok",
-    service: "college-bus-track-backend",
-    timestamp: new Date().toISOString()
-  });
-});
+setGlobalOptions({maxInstances: 10});
+
+export {
+  healthCheck,
+  onNotificationCreated,
+  onUserCreated,
+  onUserUpdated,
+  updateBusLocation,
+  detectStaleBuses,
+  seedDatabase,
+};

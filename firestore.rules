@@ -2,6 +2,155 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // ------------------------------------------------------------------
+    // Helpers
+    // ------------------------------------------------------------------
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isSelf(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // Role lives on users/{uid}.role and is mirrored into the auth token
+    // custom claim "role" by the syncUserRoleClaims Cloud Function.
+    // The token claim is checked first to avoid a document read; the
+    // profile document is used as a fallback for accounts created before
+    // the claim existed.
+    function userRole() {
+      return isSignedIn()
+        ? (
+          ('role' in request.auth.token)
+            ? request.auth.token.role
+            : get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role
+        )
+        : '';
+    }
+
+    function isAdmin() {
+      return userRole() == 'ADMIN';
+    }
+
+    function isDriver() {
+      return userRole() == 'DRIVER';
+    }
+
+    function changedKeys() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+
+    function validCoordinates(lat, lng) {
+      return lat is number && lng is number
+        && lat >= -90.0 && lat <= 90.0
+        && lng >= -180.0 && lng <= 180.0;
+    }
+
+    // ------------------------------------------------------------------
+    // users/{uid}
+    // ------------------------------------------------------------------
+    match /users/{uid} {
+      allow get, list: if isSelf(uid) || isAdmin();
+
+      // New accounts may create their own profile; only ADMIN may grant
+      // elevated roles directly through a create.
+      allow create: if isSelf(uid)
+        && request.resource.data.uid == uid
+        && request.resource.data.role in ['STUDENT', 'DRIVER', 'ADMIN'];
+
+      // Users may edit their own profile but never their role or uid.
+      allow update: if (isSelf(uid) || isAdmin())
+        && !changedKeys().hasAny(['uid'])
+        && (!isSelf(uid) || !changedKeys().hasAny(['role']));
+
+      allow delete: if isAdmin();
+    }
+
+    // ------------------------------------------------------------------
+    // buses/{busId}
+    // ------------------------------------------------------------------
+    match /buses/{busId} {
+      allow read: if isSignedIn();
+
+      allow create, delete: if isAdmin();
+
+      // Drivers may update operational fields of their own bus only.
+      allow update: if isAdmin()
+        || (
+          isDriver()
+          && resource.data.driverId == request.auth.uid
+          && !changedKeys().hasAny(['id', 'number', 'routeId', 'driverId', 'capacity'])
+        );
+    }
+
+    // ------------------------------------------------------------------
+    // routes/{routeId}
+    // ------------------------------------------------------------------
+    match /routes/{routeId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // ------------------------------------------------------------------
+    // stops/{stopId}
+    // ------------------------------------------------------------------
+    match /stops/{stopId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // ------------------------------------------------------------------
+    // busLocations/{busId} - live GPS positions written by driver devices
+    // ------------------------------------------------------------------
+    match /busLocations/{busId} {
+      allow read: if isSignedIn();
+
+      allow create, update: if (isAdmin() || (
+          isDriver()
+          && get(/databases/$(database)/documents/buses/$(busId)).data.driverId == request.auth.uid
+        ))
+        && request.resource.data.busId == busId
+        && validCoordinates(request.resource.data.latitude, request.resource.data.longitude)
+        && request.resource.data.heading is number
+        && request.resource.data.heading >= 0.0 && request.resource.data.heading <= 360.0;
+
+      allow delete: if isAdmin();
+    }
+
+    // ------------------------------------------------------------------
+    // notifications/{notificationId}
+    // Written by admins / Cloud Functions (which bypass rules).
+    // ------------------------------------------------------------------
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // ------------------------------------------------------------------
+    // deviceTokens/{tokenId} - FCM registration tokens, private per user
+    // ------------------------------------------------------------------
+    match /deviceTokens/{tokenId} {
+      allow read: if isAdmin() || (
+        isSignedIn()
+        && resource.data.uid == request.auth.uid
+      );
+
+      allow create, update: if isSignedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.token is string
+        && request.resource.data.token.size() > 0;
+
+      allow delete: if isAdmin() || (
+        isSignedIn()
+        && resource.data.uid == request.auth.uid
+      );
+    }
+
+    // ------------------------------------------------------------------
+    // Deny everything else
+    // ------------------------------------------------------------------
     match /{document=**} {
       allow read, write: if false;
     }
