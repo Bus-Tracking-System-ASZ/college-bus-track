@@ -8,6 +8,6 @@ import kotlinx.coroutines.flow.StateFlow
 
 class DashboardViewModel : ViewModel() {
     private val source = PreviewDashboardDataSource()
-    private val _data = MutableStateFlow(DashboardData())
+    private val _data = MutableStateFlow(source.getDashboardData())
     val data: StateFlow<DashboardData> = _data
 }

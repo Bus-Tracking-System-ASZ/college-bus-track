@@ -3,20 +3,16 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     id("com.android.application")
     id("com.google.gms.google-services")
-plugins {
-    id("com.android.application")
     id("org.jetbrains.kotlin.android")
 }
 
 android {
     namespace = "com.collegebustrack.app"
-    compileSdk = 37
     compileSdk = 34
 
     defaultConfig {
         applicationId = "com.collegebustrack.app"
         minSdk = 24
-        targetSdk = 36
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -25,6 +21,14 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    buildFeatures {
+        compose = true
+    }
+
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.8"
     }
 }
 
@@ -43,12 +47,7 @@ dependencies {
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.10.2")
-    buildFeatures { compose = true }
-    composeOptions { kotlinCompilerExtensionVersion = "1.5.8" }
-    kotlinOptions { jvmTarget = "17" }
-}
 
-dependencies {
     implementation(platform("androidx.compose:compose-bom:2024.02.01"))
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.activity:activity-compose:1.8.2")
