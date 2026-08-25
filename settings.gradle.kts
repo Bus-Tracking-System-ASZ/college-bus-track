@@ -16,3 +16,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "college-bus-track"
 include(":app")
+rootProject.name = "college-bus-track"
+include(":app")
