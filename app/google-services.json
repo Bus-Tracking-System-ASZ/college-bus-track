@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "522093169582",
+    "project_id": "college-bus-track-c15ad",
+    "storage_bucket": "college-bus-track-c15ad.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:522093169582:android:179228886a723f4b17963f",
+        "android_client_info": {
+          "package_name": "com.collegebustrack.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyACewq2A_7HQqw9zQz21pkHmHc4MQJzqMw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
